@@ -7,11 +7,8 @@ ExternalProject_Add(${ONNXRUNTIME_TARGET}
       SOURCE_DIR ${CMAKE_CURRENT_BINARY_DIR}/onnxruntime
       INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
       PREFIX ${BUILD_DIR}
-      INSTALL_COMMAND sh -c "mkdir -p <INSTALL_DIR>/include <INSTALL_DIR>/lib && cp -r <SOURCE_DIR>/lib/* <INSTALL_DIR>/lib && cp -r <SOURCE_DIR>/include/* <INSTALL_DIR>/include"
       CONFIGURE_COMMAND ""
-      UPDATE_COMMAND ""
       BUILD_COMMAND ""
-      BUILD_ALWAYS 0
-      BUILD_IN_SOURCE 0
+      INSTALL_COMMAND sh -c "mkdir -p <INSTALL_DIR>/include <INSTALL_DIR>/lib && cp -r <SOURCE_DIR>/lib/* <INSTALL_DIR>/lib && cp -r <SOURCE_DIR>/include/* <INSTALL_DIR>/include"
 )
 
