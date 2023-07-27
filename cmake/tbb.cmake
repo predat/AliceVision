@@ -1,5 +1,5 @@
 ExternalProject_Add(${TBB_TARGET}
-       URL https://github.com/oneapi-src/oneTBB/archive/refs/tags/v2021.8.0.tar.gz
+       URL ${TBB_URI}
        URL_HASH ${TBB_HASH_TYPE}=${TBB_HASH}
        DOWNLOAD_DIR ${BUILD_DIR}/download/tbb
        PREFIX ${BUILD_DIR}
@@ -9,8 +9,8 @@ ExternalProject_Add(${TBB_TARGET}
        INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
        CMAKE_ARGS
        ${CMAKE_CORE_BUILD_FLAGS}
-       -DTBB_TEST:BOOL=OFF
-       -DTBB_STRICT:BOOL=OFF
+       -DTBB_TEST=OFF
+       -DTBB_STRICT=OFF
        -DCMAKE_INSTALL_PREFIX:PATH=<INSTALL_DIR>
        <SOURCE_DIR>
        BUILD_COMMAND $(MAKE) -j${AV_BUILD_DEPENDENCIES_PARALLEL}
