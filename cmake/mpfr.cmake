@@ -3,8 +3,8 @@ ExternalProject_add(${MPFR_TARGET}
       URL_HASH ${MPFR_HASH_TYPE}=${MPFR_HASH}
       DOWNLOAD_DIR ${BUILD_DIR}/download/mpfr
       PREFIX ${BUILD_DIR}
-      BUILD_ALWAYS 0
       INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+      UPDATE_COMMAND autoreconf -if
       CONFIGURE_COMMAND 
         <SOURCE_DIR>/configure
 	--prefix=<INSTALL_DIR>
