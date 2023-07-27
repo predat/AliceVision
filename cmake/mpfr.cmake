@@ -1,0 +1,14 @@
+ExternalProject_add(${MPFR_TARGET}
+      URL ${MPFR_URI}
+      URL_HASH ${MPFR_HASH_TYPE}=${MPFR_HASH}
+      DOWNLOAD_DIR ${BUILD_DIR}/download/mpfr
+      PREFIX ${BUILD_DIR}
+      BUILD_ALWAYS 0
+      INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
+      CONFIGURE_COMMAND 
+        <SOURCE_DIR>/configure
+	--prefix=<INSTALL_DIR>
+	--with-gmp=<INSTALL_DIR>
+      BUILD_COMMAND $(MAKE) -j${AV_BUILD_DEPENDENCIES_PARALLEL}
+      DEPENDS ${GMP_TARGET}
+)
