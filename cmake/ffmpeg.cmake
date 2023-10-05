@@ -22,5 +22,5 @@ ExternalProject_add(${FFMPEG_TARGET}
             # --enable-libx264 # gpl
             # --enable-libx265 # gpl
       BUILD_COMMAND $(MAKE) -j${AV_BUILD_DEPENDENCIES_PARALLEL}
-      DEPENDS ${VPX_TARGET}
+      DEPENDS ${VPX_TARGET} ${X264_TARGET} ${X265_TARGET}
 )

@@ -9,7 +9,7 @@ ExternalProject_Add(${CUDA_TARGET}
        CONFIGURE_COMMAND ""
        BUILD_COMMAND ""
        INSTALL_COMMAND 
-         sh ${BUILD_DIR}/src/${CUDA_EXE} 
+       TMPDIR=/datas/tmp sh ${BUILD_DIR}/src/${CUDA_EXE} 
 	 --silent 
 	 --no-opengl-libs 
 	 --toolkit 

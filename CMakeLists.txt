@@ -20,6 +20,9 @@ option(AV_BUILD_LAPACK "Enable building an embedded Lapack" ON)
 option(AV_BUILD_SUITESPARSE "Enable building an embedded SuiteSparse" ON)
 option(AV_BUILD_FFMPEG "Enable building an embedded FFMpeg" ON)
 option(AV_BUILD_VPX "Enable building an embedded libvpx required for ffmpeg" ON)
+option(AV_BUILD_X264 "Enable building an embedded x264 required for ffmpeg" OFF)
+option(AV_BUILD_X265 "Enable building an embedded x265 required for ffmpeg" OFF)
+option(AV_BUILD_HEIF "Enable building an embedded libheif required for ffmpeg" OFF)
 option(AV_BUILD_COINUTILS "Enable building an embedded CoinUtils" ON)
 option(AV_BUILD_OSI "Enable building an embedded Osi" ON)
 option(AV_BUILD_CLP "Enable building an embedded Clp" ON)
@@ -88,8 +91,11 @@ message(STATUS "AV_BUILD_OPENGV: ${AV_BUILD_OPENGV}")
 message(STATUS "AV_BUILD_OPENCV: ${AV_BUILD_OPENCV}")
 message(STATUS "AV_BUILD_LAPACK: ${AV_BUILD_LAPACK}")
 message(STATUS "AV_BUILD_SUITESPARSE: ${AV_BUILD_SUITESPARSE}")
-message(STATUS "AV_BUILD_FFMPEG: ${AV_BUILD_FFMPEG}")
 message(STATUS "AV_BUILD_VPX: ${AV_BUILD_VPX}")
+message(STATUS "AV_BUILD_X264: ${AV_BUILD_X264}")
+message(STATUS "AV_BUILD_X265: ${AV_BUILD_X265}")
+message(STATUS "AV_BUILD_HEIF: ${AV_BUILD_HEIF}")
+message(STATUS "AV_BUILD_FFMPEG: ${AV_BUILD_FFMPEG}")
 message(STATUS "AV_USE_CUDA: ${AV_USE_CUDA}")
 message(STATUS "AV_USE_OPENMP: ${AV_USE_OPENMP}")
 message(STATUS "AV_BUILD_COINUTILS: ${AV_BUILD_COINUTILS}")
@@ -136,7 +142,7 @@ set(BUILD_DIR "${CMAKE_CURRENT_BINARY_DIR}/external")
 
 set(CMAKE_CORE_BUILD_FLAGS 
 	-DCMAKE_BUILD_TYPE=${DEPS_CMAKE_BUILD_TYPE}
-	-DBUILD_SHARED_LIBS:BOOL=${BUILD_SHARED_LIBS} 
+	-DBUILD_SHARED_LIBS=${BUILD_SHARED_LIBS} 
 	-DCMAKE_INSTALL_LIBDIR=lib
 	#-DCMAKE_INSTALL_DO_STRIP:BOOL=${CMAKE_INSTALL_DO_STRIP} 
 	#-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER}
@@ -145,12 +151,18 @@ set(CMAKE_CORE_BUILD_FLAGS
 
 include(cmake/versions.cmake)
 
+# Add Zlib
 if(AV_BUILD_ZLIB)
   include(cmake/zlib.cmake)
+else()
+  set(ZLIB_TARGET "")	  
 endif()
 
+# Add Assimp
 if(AV_BUILD_ASSIMP)
   include(cmake/assimp.cmake)
+else()
+  set(ASSIMP_TARGET "")	  
 endif()
 
 # Add Geogram
@@ -209,7 +221,7 @@ if(AV_BUILD_PNG)
 endif()
 
 if(AV_BUILD_JPEG)
-  include(cmake/jpeg.cmake)
+  include(cmake/libjpeg-turbo.cmake)
 endif()
 
 if(AV_BUILD_LIBRAW)
@@ -219,42 +231,34 @@ endif()
 # Add Boost
 include(cmake/boost.cmake)
 
+# Add ffmpeg
 if(AV_BUILD_FFMPEG)
+  if(AV_BUILD_X264)
+    include(cmake/x264.cmake)
+  else()
+    set(X264_TARGET "")
+  endif()
 
-# GPL
-# ExternalProject_add(x264
-#       GIT_REPOSITORY https://code.videolan.org/videolan/x264.git
-#       GIT_TAG 5493be84
-#       GIT_PROGRESS ON
-#       PREFIX ${BUILD_DIR}
-#       BUILD_IN_SOURCE 0
-#       BUILD_ALWAYS 0
-#       UPDATE_COMMAND ""
-#       INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-#       CONFIGURE_COMMAND <SOURCE_DIR>/configure --prefix=<INSTALL_DIR> --disable-static --enable-shared
-#       BUILD_COMMAND $(MAKE) -j${AV_BUILD_DEPENDENCIES_PARALLEL}
-# )
-# GPL
-# ExternalProject_add(x265
-#       GIT_REPOSITORY https://code.videolan.org/videolan/x265.git
-#       GIT_TAG 3.1.1
-#       GIT_PROGRESS ON
-#       PREFIX ${BUILD_DIR}
-#       BUILD_IN_SOURCE 0
-#       BUILD_ALWAYS 0
-#       UPDATE_COMMAND ""
-#       UPDATE_COMMAND echo add_subdirectory(source) > CMakeLists.txt
-#       INSTALL_DIR ${CMAKE_INSTALL_PREFIX}
-#       CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR>
-#                  -DCMAKE_PROJECT_NAME=x265 -DENABLE_SHARED:bool=ON -DENABLE_PIC:bool=ON
-#       BUILD_COMMAND $(MAKE) -j${AV_BUILD_DEPENDENCIES_PARALLEL}
-# )
+  if(AV_BUILD_X265)
+    include(cmake/x265.cmake)
+  else()
+    set(X265_TARGET "")
+  endif()
 
   if(AV_BUILD_VPX)
     include(cmake/libvpx.cmake)
+  else()
+    set(VPX_TARGET "")
   endif()
 
   include(cmake/ffmpeg.cmake)
+endif()
+
+# Add libheif
+if(AV_BUILD_HEIF)
+  include(cmake/libheif.cmake)
+else()
+  set(HEIF_TARGET "")
 endif()
 
 # Add OpenImageIO
@@ -310,6 +314,8 @@ endif()
 
 if(AV_BUILD_USD)
   include(cmake/usd.cmake)
+else()
+  set(USD_TARGET "")
 endif()
 
 set(AV_DEPS
