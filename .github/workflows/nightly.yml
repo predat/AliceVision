@@ -135,3 +135,14 @@ jobs:
             --notes-file nightly_release_notes.md \
             --prerelease
 
+      # ── Trigger downstream nightlies ─────────────
+      # Projects building against these archives (space-separated "owner/repo" list,
+      # token allowed to write their contents)
+      - name: Trigger downstream nightlies
+        if: vars.NIGHTLY_DISPATCH_REPOS != ''
+        env:
+          GH_TOKEN: ${{ secrets.NIGHTLY_DISPATCH_TOKEN }}
+        run: |
+          for REPO in ${{ vars.NIGHTLY_DISPATCH_REPOS }}; do
+            gh api "repos/${REPO}/dispatches" -f event_type=alicevision-nightly
+          done
