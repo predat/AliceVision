@@ -3,6 +3,8 @@ name: Build macOS
 on:
   workflow_call:
   workflow_dispatch:
+  push:
+    branches: [ci/nightly-macos]
 
 # Not part of the continuous integration: all the dependencies are built from
 # source (see INSTALL_macOS.md), which takes hours on a GitHub-hosted runner.
