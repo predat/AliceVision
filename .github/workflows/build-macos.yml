@@ -1,0 +1,77 @@
+name: Build macOS
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+# Not part of the continuous integration: all the dependencies are built from
+# source (see INSTALL_macOS.md), which takes hours on a GitHub-hosted runner.
+jobs:
+  build-macos:
+    runs-on: macos-15
+    timeout-minutes: 360
+
+    env:
+      ALICEVISION_ROOT: ${{ github.workspace }}/../AV_install
+      ALICEVISION_BUNDLE: ${{ github.workspace }}/../AV_bundle
+
+    steps:
+      - uses: actions/checkout@v6
+
+      # Python of the Meshroom macOS bundle, the SWIG bindings are built against it
+      # (setup-python exports Python3_ROOT_DIR, used by find_package(Python3)).
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      # Build tools required by the embedded dependencies, see INSTALL_macOS.md.
+      # Apple's bison is too old to build SWIG: use Homebrew's one (keg-only).
+      - name: Install build tools
+        run: |
+          brew install autoconf automake pkgconf gettext m4 bison
+          echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
+          python -m pip install numpy
+
+      # Some dependencies do not support CMake 4.
+      - name: Setup CMake and Ninja
+        uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~3.31.0"
+
+      - name: Configure
+        run: |
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX="$ALICEVISION_ROOT" \
+            -DALICEVISION_BUNDLE_PREFIX="$ALICEVISION_BUNDLE" \
+            -DALICEVISION_BUILD_DEPENDENCIES=ON \
+            -DAV_BUILD_DEPENDENCIES_PARALLEL=0
+
+      # No --parallel: the dependencies and AliceVision get AV_BUILD_DEPENDENCIES_PARALLEL.
+      - name: Build
+        run: cmake --build build
+
+      - name: Bundle
+        run: cmake --build build --target darwin-bundle
+
+      # The bundle must run without anything from the build machine.
+      - name: Smoke test
+        run: |
+          ls "$ALICEVISION_BUNDLE" "$ALICEVISION_BUNDLE/share"
+          # No --help option: without arguments the binaries print their usage and exit 1
+          "$ALICEVISION_BUNDLE/bin/aliceVision_cameraInit" 2>&1 | grep -q maxCoresAvailable
+
+      - name: Create archive
+        id: archive
+        run: |
+          ARCHIVE="AliceVision-nightly-$(date -u +%Y%m%d)-$(git rev-parse --short=8 HEAD)-macos.tar.gz"
+          tar -czf "$ARCHIVE" -C "$(dirname "$ALICEVISION_BUNDLE")" "$(basename "$ALICEVISION_BUNDLE")"
+          echo "filename=$ARCHIVE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload archive artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-package
+          path: ${{ steps.archive.outputs.filename }}
+          retention-days: 3
