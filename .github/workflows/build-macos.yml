@@ -48,12 +48,46 @@ jobs:
             -DALICEVISION_BUILD_DEPENDENCIES=ON \
             -DAV_BUILD_DEPENDENCIES_PARALLEL=0
 
-      # No --parallel: the dependencies and AliceVision get AV_BUILD_DEPENDENCIES_PARALLEL.
+      # The dependencies take most of the build time but rarely change: cache their
+      # install prefix, keyed on their recipes and the compiler.
+      - name: Dependencies cache key
+        id: deps-key
+        run: |
+          COMPILER=$(xcrun clang --version | head -n 1 | shasum | cut -c1-8)
+          echo "key=deps-v1-${{ runner.os }}-${{ runner.arch }}-$COMPILER-${{ hashFiles('src/cmake/Dependencies.cmake', 'src/cmake/DependenciesVersions.cmake', 'src/cmake/Helpers.cmake', 'src/cmake/ConditionalOption.cmake', 'src/cmake/deps/**') }}" >> "$GITHUB_OUTPUT"
+
+      # ALICEVISION_ROOT without '..', which actions/cache rejects (runner.workspace is
+      # the parent of github.workspace but cannot be used in the job env).
+      - name: Restore dependencies
+        id: deps-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ runner.workspace }}/AV_install
+          key: ${{ steps.deps-key.outputs.key }}
+
+      # The aliceVision-mkdir step depends on all the dependencies and nothing else.
+      # No --parallel: each dependency gets AV_BUILD_DEPENDENCIES_PARALLEL.
+      - name: Build dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        run: cmake --build build --target aliceVision-prefix/src/aliceVision-stamp/aliceVision-mkdir
+
+      - name: Save dependencies
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ runner.workspace }}/AV_install
+          key: ${{ steps.deps-key.outputs.key }}
+
+      # Run the configure command the superbuild generated for AliceVision (it carries
+      # all the dependency flags), then build it directly: going through the superbuild
+      # targets would rebuild the dependencies.
       - name: Build
-        run: cmake --build build
+        run: |
+          sh -c "$(ninja -C build -t commands aliceVision-prefix/src/aliceVision-stamp/aliceVision-configure | tail -n 1)"
+          cmake --build build/aliceVision_build --target install
 
       - name: Bundle
-        run: cmake --build build --target darwin-bundle
+        run: cmake --build build/aliceVision_build --target darwin-bundle
 
       # The bundle must run without anything from the build machine.
       - name: Smoke test
