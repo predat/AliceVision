@@ -78,6 +78,23 @@ jobs:
           path: ${{ runner.workspace }}/AV_install
           key: ${{ steps.deps-key.outputs.key }}
 
+      # The projects building against the bundle (QtAliceVision) need the dependencies too:
+      # archive the install prefix while it only contains them. Their CMake configs refer
+      # to it with absolute paths: it must be extracted in the same directory.
+      - name: Create dependencies archive
+        id: deps-archive
+        run: |
+          ARCHIVE="AliceVision-nightly-$(date -u +%Y%m%d)-$(git rev-parse --short=8 HEAD)-macos-deps.tar.gz"
+          tar -czf "$ARCHIVE" -C "${{ runner.workspace }}" AV_install
+          echo "filename=$ARCHIVE" >> "$GITHUB_OUTPUT"
+
+      - name: Upload dependencies archive artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: macos-deps-package
+          path: ${{ steps.deps-archive.outputs.filename }}
+          retention-days: 3
+
       # Run the configure command the superbuild generated for AliceVision (it carries
       # all the dependency flags), then build it directly: going through the superbuild
       # targets would rebuild the dependencies.
