@@ -29,7 +29,7 @@ jobs:
       # Apple's bison is too old to build SWIG: use Homebrew's one (keg-only).
       - name: Install build tools
         run: |
-          brew install autoconf automake pkgconf gettext m4 bison
+          brew install autoconf automake pkgconf gettext m4 bison nasm
           echo "$(brew --prefix bison)/bin" >> "$GITHUB_PATH"
           python -m pip install numpy
 
