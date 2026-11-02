@@ -133,6 +133,11 @@ jobs:
               echo "| \`$(basename "$ARCHIVE")\` | macOS (arm64, no CUDA) |" >> nightly_release_notes.md
             fi
           done
+          for ARCHIVE in dist/*-macos-deps.tar.gz; do
+            if [ -f "$ARCHIVE" ]; then
+              echo "| \`$(basename "$ARCHIVE")\` | macOS dependencies, to extract in \`/Users/runner/work/AliceVision\` to build against the macOS archive |" >> nightly_release_notes.md
+            fi
+          done
 
       # ── Update release from file ──────────────────
       - name: Update release notes
