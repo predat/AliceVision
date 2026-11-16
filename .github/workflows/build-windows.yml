@@ -169,7 +169,11 @@ jobs:
           "$cudaRoot\bin" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
 
       # Install a recent CMake and Ninja into PATH.
+      # CMake is held on 4.4: with CTest 4.5.0, the tests logging the most
+      # (--log_level=all) run 10 times slower and reach the timeout.
       - uses: lukka/get-cmake@latest
+        with:
+          cmakeVersion: "~4.4.0"
 
       # ------ BUILD ----- 
 
